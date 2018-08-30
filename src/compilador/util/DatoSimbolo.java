@@ -1,4 +1,4 @@
-package lexico.util;
+package compilador.util;
 
 public interface DatoSimbolo {
     static final char ESPACIO = ' ';
