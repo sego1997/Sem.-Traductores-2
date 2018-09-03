@@ -2,131 +2,112 @@ package compilador.sistema;
 
 import java.util.Stack;
 
+import compilador.util.DatoSimbolo;
 import compilador.util.TipoSimbolo;
+import compilador.util.ColumnaSimbolo;
 
-public class Sintactico extends Thread implements TipoSimbolo{	   
-	private static final int TIEMPO = 1000;
-	
-	private boolean continuar;
+public class Sintactico extends Thread implements TipoSimbolo,DatoSimbolo,ColumnaSimbolo{	   
+	private static final int TIEMPO = 500;
 	private final Compilador compilador;
 	
-	int fil;
-	int col;
+	private int fil;
+	private int col;
+	private String simbolo;
+	private boolean continuar;
     private int simboloActual;    
-    private Stack<Integer> simbolos;
-       
-    private static final int[] reglas = {2};
+    private Stack<Integer> pilaSintactica;
+    
+    private static final int[] reglas = {6};
     private static final int[][] tablaLR = {
-    								{2,0,1},
-    								{0,-1,0},
-    								{0,-2,0}
-    							};
-    /*
-    private static final int[][] tablaLR_V2 = {
-									{2,0,1},
-									{0,-1,0},
-									{0,-2,0}
+									{2,0,0,1},
+									{0,0,-1,0},
+									{0,3,0,0},
+									{4,0,0,0},
+									{0,0,-2,0}
 		};
-	*/ 
-//    private int[][] tablaLR;
-        
-    public Sintactico(Compilador compilador /*, int tipoEjercicio*/){
-        this.compilador = compilador;
-        continuar = true;
-        simboloActual = 0;
-//        if(tipoEjercicio == 1) tablaLR = tablaLR_V1;
-        simbolos = new Stack<Integer>();
+    
+    public Sintactico(Compilador compilador){
+        this.compilador = compilador;        
     }
     
     @Override
     public void run(){
-    	simbolos.push(1);
-    	simbolos.push(0);
-    	compilador.dameEscribano().imprimirDatosSintacticos(datosPila());
-//    	int cont = 0;    	
-        while(compilador.puedeContinuar() || continuar){   
-//        	cont++;
-//        	System.out.println("Numero entrada >> "+cont);
-        	if(simbolos.size()==0){
-        		pausar();
-        	}
-        	
-//        	for(int i=0; i<compilador.dameSimbolos().size(); i++){
-//        		System.out.println("Simbolo >> "+compilador.dameSimbolos().get(i).dameDato());
-//        	}
+    	pausar();
+    	continuar = true;
+        pilaSintactica = new Stack<Integer>();    	
+    	pilaSintactica.push(COL_PESO);
+    	pilaSintactica.push(COL_ID);
+    	compilador.dameEscribano().imprimirDatosSintacticos("	Datos sintacticos \n"+datosPila());
+        while(compilador.puedeContinuar() && continuar){
         	try {	        	
 				sleep(TIEMPO);
-				fil = simbolos.peek();
-				if(compilador.dameSimbolos().size()>simboloActual){					
+				String entrada = "";				
+				fil = pilaSintactica.peek();				
+				if(compilador.dameSimbolos().size()>simboloActual){
+					simbolo = compilador.dameSimbolos().get(simboloActual).dameDato();
 					col =  compilador.dameSimbolos().get(simboloActual).dameTipo();
+					castearTipoSimbolo();
+					entrada = "("+simbolo+") >> "+col;
 				}else{
-					if(simbolos.size()!=0){
-						col = 1;
-					}else continuar = false;
-				}					        	 
-	        	int accion = tablaLR[fil][col];        	               	
-	        	simboloActual++; 
-	        	compilador.dameEscribano().imprimirDatosSintacticos("\n	Entrada >>"+col+"\n	Accion >>"+accion+"\n");
-//	        	String datos;
-//	        	String dtos = "\n	tablaLR["+fil+"]["+col+"] >> "+accion;
-//	        	compilador.dameEscribano().imprimirDatosSintacticos(dtos);	
-//	        	datos = datosPila()+"\n	Entrada >>"+col+"\n	Accion >>"+tipoAccion(accion);	        	
-//	        	compilador.dameEscribano().imprimirDatosSintacticos("\n	Entrada >>"+col+"\n	Accion >>"+accion+"\n");
-	        	
+					col = COL_PESO;
+					entrada = "("+PESO+") >> "+col;
+				}
+	        	int accion = tablaLR[fil][col];        	               		        	
+	        	String datos = "\n	Entrada "+entrada+"\n	Accion >> d"+accion+"\n";
+	        	compilador.dameEscribano().imprimirDatosSintacticos(datos);	        	
 	        	if(accion==-1) {
 	        		continuar = false;
 	        	}else if(accion<0){
 	        		reduccion(accion);
 	        	}else if(accion>0){	        		
-	        		simbolos.push(col);
-	        		simbolos.push(accion);
+	        		pilaSintactica.push(col);
+	        		pilaSintactica.push(accion);
 	        		compilador.dameEscribano().imprimirDatosSintacticos(datosPila());
 	        	}else{
 	        		if(accion==0){
 	        			compilador.puedeContinuar(false);
 	        		}
 	        	}
-	        	
-//	        	datos = datosPila()+"\n	Entrada >>"+col+"\n	Accion >>"+tipoAccion(accion);
-//	        	compilador.dameEscribano().imprimirDatosSintacticos(datos);
-			} catch (InterruptedException e) {}        	
+			} catch (InterruptedException e) {}
+        	if(compilador.dameSimbolos().size()>simboloActual && compilador.dameLexico().puedeContinuar()){
+        		pausar();
+        	}
+        	simboloActual++;
         }
-        System.out.println("Se detuvo el sintactico");
+        compilador.dameEscribano().imprimirDatosSintacticos("\n	Finalizado ...");
     }
     
     private void reduccion(int tp){
     	tp = tp*-1;
-    	int tamaPops = reglas[tp-2];
+    	int tamaPops = reglas[tp-COL_PESO];
     	for(int i=0; i<tamaPops; i++){
-    		simbolos.pop();
+    		pilaSintactica.pop();
     	}
-    	fil = simbolos.peek();
-    	col = 2;
-    	simbolos.push(col);
-    	simbolos.push(tablaLR[fil][col]);
+    	fil = pilaSintactica.peek();
+    	col = COL_REGLA;
+    	pilaSintactica.push(col);
+    	pilaSintactica.push(tablaLR[fil][col]);
     	compilador.dameEscribano().imprimirDatosSintacticos(datosPila());
     }
     
     private String datosPila(){
-    	String datosPila = "\n	Datos en la pila:\n	";
-    	int tamaPila = simbolos.size();
-    	System.out.println("Datos de pila "+tamaPila);
+    	String datosPila = "\n	Pila:\n	";
+    	int tamaPila = pilaSintactica.size();
     	for(int i=0; i<tamaPila; i++){
-    		datosPila += " "+simbolos.get(i);
+    		datosPila += " "+pilaSintactica.get(i);
     	}
-		System.out.println(datosPila);
     	return datosPila;
     }
     
-    /*    
-    private String tipoAccion(int accion){
-    	String tipoAccion = "";
-    	if(accion==-1) tipoAccion = "Estado de aceptacion";
-    	else if(accion>0) tipoAccion = "Desplazamiento";
-    	else if(accion<0) tipoAccion = "Reduccion";    	
-    	return tipoAccion;
+    private void castearTipoSimbolo(){
+    	if(col==ES_IDENTIFICADOR){
+    		col = COL_ID;
+    	}else if(col==ES_SUM_O_RES){
+    		if(simbolo.equals(String.valueOf(SUMA))){
+    			col = COL_MAS;
+    		}
+    	}
     }
-    */
     
     public void pausar(){
     	try{
