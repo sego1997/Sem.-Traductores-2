@@ -1,28 +1,31 @@
-package compilador.sistema;
+package compilador.sistema.sintactico;
 
 import java.util.Stack;
 
+import compilador.sistema.Compilador;
 import compilador.util.DatoSimbolo;
 import compilador.util.TipoSimbolo;
 import compilador.util.ColumnaSimbolo;
 
 public class Sintactico extends Thread implements TipoSimbolo,DatoSimbolo,ColumnaSimbolo{	   
 	private static final int TIEMPO = 500;
+	private static final int POS_DATO = 0;
+	private static final int POS_TIPO = 1;
+	
 	private final Compilador compilador;
 	
 	private int fil;
 	private int col;
-	private String simbolo;
 	private boolean continuar;
     private int simboloActual;    
-    private Stack<Integer> pilaSintactica;
+    private Stack<Simbolo> pilaSintactica;
     
-    private static final int[] reglas = {6};
+    private static final int[] reglas = {6,2};
     private static final int[][] tablaLR = {
 									{2,0,0,1},
 									{0,0,-1,0},
-									{0,3,0,0},
-									{4,0,0,0},
+									{0,3,-3,0},
+									{2,0,0,4},
 									{0,0,-2,0}
 		};
     
@@ -33,24 +36,24 @@ public class Sintactico extends Thread implements TipoSimbolo,DatoSimbolo,Column
     @Override
     public void run(){
     	pausar();
+    	String entrada;	
     	continuar = true;
-        pilaSintactica = new Stack<Integer>();    	
-    	pilaSintactica.push(COL_PESO);
-    	pilaSintactica.push(COL_ID);
-    	compilador.dameEscribano().imprimirDatosSintacticos("	Datos sintacticos \n"+datosPila());
+        pilaSintactica = new Stack<Simbolo>();    	
+    	pilaSintactica.push(new Terminal(PESO+""));
+    	pilaSintactica.push(new Accion(COL_ID+""));
+    	compilador.dameEscribano().imprimirDatosSintacticos("	Datos sintacticos \n"+mostrarPila());
         while(compilador.puedeContinuar() && continuar){
         	try {	        	
-				sleep(TIEMPO);
-				String entrada = "";				
-				fil = pilaSintactica.peek();				
-				if(compilador.dameSimbolos().size()>simboloActual){
-					simbolo = compilador.dameSimbolos().get(simboloActual).dameDato();
-					col =  compilador.dameSimbolos().get(simboloActual).dameTipo();
+				sleep(TIEMPO);										
+				fil = Integer.valueOf(pilaSintactica.peek().dameDato());		
+				if(compilador.dameSimbolos().size()>simboloActual){					
+					String[] simbolos = compilador.dameSimbolos().get(simboloActual).split(SEPARADOR);
+					entrada = simbolos[POS_DATO];
+					col =  Integer.valueOf(simbolos[POS_TIPO]);	
 					castearTipoSimbolo();
-					entrada = "("+simbolo+") >> "+col;
 				}else{
 					col = COL_PESO;
-					entrada = "("+PESO+") >> "+col;
+					entrada = PESO+"";
 				}
 	        	int accion = tablaLR[fil][col];        	               		        	
 	        	String datos = "\n	Entrada "+entrada+"\n	Accion >> d"+accion+"\n";
@@ -60,9 +63,9 @@ public class Sintactico extends Thread implements TipoSimbolo,DatoSimbolo,Column
 	        	}else if(accion<0){
 	        		reduccion(accion);
 	        	}else if(accion>0){	        		
-	        		pilaSintactica.push(col);
-	        		pilaSintactica.push(accion);
-	        		compilador.dameEscribano().imprimirDatosSintacticos(datosPila());
+	        		pilaSintactica.push(new Terminal(entrada));
+	        		pilaSintactica.push(new Accion(accion+""));
+	        		compilador.dameEscribano().imprimirDatosSintacticos(mostrarPila());
 	        	}else{
 	        		if(accion==0){
 	        			compilador.puedeContinuar(false);
@@ -83,29 +86,28 @@ public class Sintactico extends Thread implements TipoSimbolo,DatoSimbolo,Column
     	for(int i=0; i<tamaPops; i++){
     		pilaSintactica.pop();
     	}
-    	fil = pilaSintactica.peek();
+    	fil = Integer.valueOf(pilaSintactica.peek().dato);
     	col = COL_REGLA;
-    	pilaSintactica.push(col);
-    	pilaSintactica.push(tablaLR[fil][col]);
-    	compilador.dameEscribano().imprimirDatosSintacticos(datosPila());
+    	pilaSintactica.push(new NoTerminal("E"));
+    	pilaSintactica.push(new Accion(tablaLR[fil][col]+""));
+    	compilador.dameEscribano().imprimirDatosSintacticos(mostrarPila());
     }
     
-    private String datosPila(){
+    private String mostrarPila(){
     	String datosPila = "\n	Pila:\n	";
     	int tamaPila = pilaSintactica.size();
     	for(int i=0; i<tamaPila; i++){
-    		datosPila += " "+pilaSintactica.get(i);
+    		datosPila += pilaSintactica.get(i).dameDato();
     	}
     	return datosPila;
     }
+    
     
     private void castearTipoSimbolo(){
     	if(col==ES_IDENTIFICADOR){
     		col = COL_ID;
     	}else if(col==ES_SUM_O_RES){
-    		if(simbolo.equals(String.valueOf(SUMA))){
-    			col = COL_MAS;
-    		}
+    		col = COL_MAS;    		
     	}
     }
     
