@@ -1,52 +1,52 @@
-package lexico.sistema;
-
-import lexico.util.DatoSimbolo;
-import lexico.util.TipoSimbolo;
+package compilador.sistema.lexico;
+import compilador.sistema.Compilador;
+import compilador.util.DatoSimbolo;
+import compilador.util.TipoSimbolo;
 
 public class Lexico extends Thread implements DatoSimbolo,TipoSimbolo{		
-//	private static final int ERROR = -1;	
 	private static final int ASCII_A = 65;
 	private static final int ASCII_a = 97;
 	private static final int ASCII_0 = 48;
 	private static final int MAX_LETRAS = 26;
 	private static final int MAX_DIGITOS = 9;
-		        
-	private final Compilador compilador;
-	
+	private final Compilador compilador;	
     private int estado;
-    private String palabra;        
-    private int caracterActual;
+    private String palabra;
+    private boolean continuar;
+    private int caracterActual;   
+    private int tamaFlujoCaracteres;    
     private final String flujoCaracteres;
-    private final int tamaFlujoCaracteres;	
         
-	public Lexico(Compilador c, String fc){                
-		compilador = c;
-        flujoCaracteres = fc;
-        estado = 0;
-        palabra = "";
-        caracterActual = 0;
-        tamaFlujoCaracteres = fc.length();
+	public Lexico(Compilador compilador, String flujoCaracteres){                
+		this.compilador = compilador;
+        this.flujoCaracteres = flujoCaracteres;         
 	}
 	
     private char sigCaracter(){
     	char c = 0;		
         if(caracterActual>=tamaFlujoCaracteres){
-        	compilador.puedeContinuar(false);
+        	continuar = false;
         }else{
         	c = flujoCaracteres.charAt(caracterActual);
-        }        
+        }
+        caracterActual++;
         return c;
     }
         
     @Override
     public void run(){
-        while(compilador.puedeContinuar()){
-            char c = sigCaracter();
-            palabra += c;
+    	estado = 0;
+        palabra = "";
+        continuar = true;
+        caracterActual = 0;
+        tamaFlujoCaracteres = flujoCaracteres.length();       
+    	compilador.dameEscribano().imprimirDatosLexicos("     Datos lexicos \n");
+        while(compilador.puedeContinuar() && continuar){            
+        	char c = sigCaracter();
+        	palabra += c;
             switch(estado){
             	case 0: 
-            		if(ESPACIO==c){
-            			estado = 0;
+            		if(ESPACIO==c || "	"==String.valueOf(c)){
             			palabra = "";
             		}else if(COMILLA==c){
 						estado = 5;
@@ -80,9 +80,11 @@ public class Lexico extends Thread implements DatoSimbolo,TipoSimbolo{
 						agregarSimbolo(palabra,ES_PESO);
 					}else if(esDigito(c)){
 						estado = 1;			
-					}else if(esLetra(c)){
+					}else if(esLetra(c) || c==GUION_BAJO){
 						estado = 4;
-					}												
+					}else {
+//						compilador.puedeContinuar(false);
+					}
 				break;
 					
 				case 1: 
@@ -90,8 +92,7 @@ public class Lexico extends Thread implements DatoSimbolo,TipoSimbolo{
 						if(c==PUNTO){
 							estado = 2;
 						}else{
-							int tamaEntero = palabra.length()-1;
-							agregarSimbolo(palabra.substring(0,tamaEntero),ES_DATO_ENTERO);
+							agregarSimbolo(palabra.substring(0,palabra.length()-1),ES_DATO_ENTERO);
 							caracterActual--;
 						}
 					}
@@ -102,9 +103,7 @@ public class Lexico extends Thread implements DatoSimbolo,TipoSimbolo{
 						estado = 3;
 					}else{
 						estado = 0;						
-//						System.out.println("Flujo >> "+palabra+" es invalido");						
 						palabra = "";
-//						compilador.puedeContinuar(false);
 					}
 				break;
 						
@@ -185,24 +184,19 @@ public class Lexico extends Thread implements DatoSimbolo,TipoSimbolo{
 					agregarSimbolo(palabra,ES_OP_IGUALDAD);
 				}
 				break;
-			}
-            caracterActual++;
+			}            
         }
-        compilador.mostrarDatosLexico();
+        compilador.dameEscribano().imprimirDatosLexicos("\n\n     Finalizado ...");
+        continuar = false;
     }
     
-    private void agregarSimbolo(String dato, int tipo){ 
-        estado = 0;
-        palabra = "";
-        compilador.dameSimbolos().add(new Simbolo(dato,tipo));
+    private void agregarSimbolo(String dato, int tipo){
+        	estado = 0;
+            palabra = "";
+            compilador.dameSimbolos().add(dato+SEPARADOR+tipo);
+            compilador.dameEscribano().imprimirDatosLexicos("\n     "+dato+" >> ("+tipo+")");
     }
-    	
-        /*
-        private void agregarError(){
-        	
-        }
-        */
-	
+    
 	private boolean esLetra(char c){
 		boolean esLetra = false;
 		int ascii_c = (int)c;
@@ -221,19 +215,8 @@ public class Lexico extends Thread implements DatoSimbolo,TipoSimbolo{
 		}
 		return esDigito;
 	}
-	  
-    public void pausar(){
-    	try{
-    		synchronized(this){
-    			wait();
-            }
-        }catch(InterruptedException e){}           
-    }
-        
-    public void renaudar(){
-    	synchronized(this){
-    		notify();
-        }
-    }
+	
+	public boolean puedeContinuar() {
+		return continuar;
+	}
 }
-

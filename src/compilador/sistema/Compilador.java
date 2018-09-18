@@ -1,34 +1,30 @@
-package lexico.sistema;
+package compilador.sistema;
 import java.util.ArrayList;
-
-import lexico.util.Escribano;
+import compilador.util.Escribano;
+import compilador.sistema.lexico.Lexico;
+import compilador.sistema.sintactico.Sintactico;
 
 public class Compilador {   
     private boolean continuar;
-    private ArrayList<Simbolo> simbolos;
+    private ArrayList<String> simbolos;
 	private String flujoCaracteres;     
     
 	private Escribano escribano;
-//	private Lexico lexico;
+	private Lexico lexico;
+	private Sintactico sintactico;
         
 	public Compilador(Escribano escribano){
 		this.escribano = escribano;
-		flujoCaracteres = escribano.dameAreaCompilacion().getText();                
+		flujoCaracteres = escribano.dameFlujoCaracteres();                
         continuar = !flujoCaracteres.isEmpty();
         tratarFlujoCaracteres();
         simbolos = new ArrayList<>();
 	}
 	
     public void inicializar(){
-    	(new Lexico(this,flujoCaracteres)).start();    	
-    }                
-    
-    public void mostrarDatosLexico(){
-    	String datosLexico = "Datos de compilacion";
-    	for(int i=0; i<simbolos.size(); i++){
-    		datosLexico += "\n	 "+simbolos.get(i).dameDato()+" >> ("+simbolos.get(i).dameTipo()+")";
-    	}
-    	escribano.imprimirAreaInformador(datosLexico);
+    	escribano.limpiarDatos();
+    	(lexico = new Lexico(this,flujoCaracteres)).start();
+    	(sintactico = new Sintactico(this)).start();
     }
     
     private void tratarFlujoCaracteres(){
@@ -38,17 +34,26 @@ public class Compilador {
     		flujoCaracteres += fcs[i];
     	}
     }
-    
-    
+        
     public void puedeContinuar(boolean continuar){
 		this.continuar = continuar;
-	}
-       
+	}      
     public boolean puedeContinuar(){
 		return continuar;
 	}
     
-    public ArrayList<Simbolo> dameSimbolos(){
-        return this.simbolos;
+    public Escribano dameEscribano(){
+    	return escribano;
+    }
+   
+    public Sintactico dameSintactico(){
+    	return sintactico;
+    }
+    public Lexico dameLexico(){
+    	return lexico;
+    }
+    
+    public ArrayList<String> dameSimbolos(){
+        return simbolos;
     }        
 }

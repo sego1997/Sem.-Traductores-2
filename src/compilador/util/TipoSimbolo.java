@@ -1,4 +1,4 @@
-package lexico.util;
+package compilador.util;
 
 public interface TipoSimbolo {
 	static final int ES_IDENTIFICADOR = 0;

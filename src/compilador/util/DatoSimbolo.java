@@ -2,6 +2,7 @@ package compilador.util;
 
 public interface DatoSimbolo {
     static final char ESPACIO = ' ';
+    static final char GUION_BAJO = '_';
 	static final char SUMA = '+';
 	static final char RESTA = '-';
 	static final char DIVISION = '/';
@@ -28,4 +29,5 @@ public interface DatoSimbolo {
 	static final String WHILE = "while";
 	static final String RETURN = "return";
 	static final String ELSE = "else";
+	static final String SEPARADOR = ":";
 }

@@ -4,9 +4,8 @@
  * Materia: Seminario de solucion de problemas de Traductores de lenguaje 2
  * Trabajo: Analizador lexico
  */
-
-package lexico;
-import lexico.visual.VentanaPrincipal;
+package compilador;
+import compilador.visual.VentanaPrincipal;
 
 public class Main {	
 	public static void main(String[] args){	

@@ -1,58 +1,54 @@
 package compilador.visual;
-
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GridLayout;
+//import java.awt.GridLayout;
 import java.awt.ScrollPane;
-
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
 public class PanelInformador extends JPanel{
 	private static final long serialVersionUID = 1L;
-	
-	private JTextArea informadorLexico;
-	private JTextArea informadorSintactico;
+	private JTextArea infoLexico;
+	private JTextArea infoSintactico;
 	
 	public PanelInformador(){
-		setLayout(new GridLayout());
+		setLayout(new BorderLayout());
 		
 		Font tipoLetras = new Font("Times New Romes",Font.PLAIN,20);
-		informadorLexico = new JTextArea();
-		informadorSintactico = new JTextArea();
+		infoLexico = new JTextArea();
+		infoSintactico = new JTextArea();
 		ScrollPane scrlLexico = new ScrollPane();
 		ScrollPane scrlSintactico = new ScrollPane();
 		
-		informadorLexico.setEditable(false);
-		informadorLexico.setFont(tipoLetras);
-		informadorLexico.setBackground(new Color(220,29,98));
-		informadorLexico.setForeground(Color.WHITE);
+		infoLexico.setEditable(false);
+		infoLexico.setFont(tipoLetras);
+		infoLexico.setBackground(new Color(220,29,98));
+		infoLexico.setForeground(Color.WHITE);
 		
-		informadorSintactico.setEditable(false);
-		informadorSintactico.setFont(tipoLetras);
-		informadorSintactico.setBackground(new Color(220,29,98));
-		informadorSintactico.setForeground(Color.WHITE);
+		infoSintactico.setEditable(false);
+		infoSintactico.setFont(tipoLetras);
+		infoSintactico.setBackground(new Color(220,29,98));
+		infoSintactico.setForeground(Color.WHITE);
 				
-		scrlLexico.add(informadorLexico);
-		scrlLexico.setPreferredSize(new Dimension(1000,200));
-	    scrlSintactico.add(informadorSintactico);
-	    scrlSintactico.setPreferredSize(new Dimension(1000,200));
+		scrlLexico.add(infoLexico);
+		scrlLexico.setPreferredSize(new Dimension(350,350));
+	    scrlSintactico.add(infoSintactico);
+	    scrlSintactico.setPreferredSize(new Dimension(1000,350));
 		
-		add(scrlLexico);
-		add(scrlSintactico);	
+		add("West",scrlLexico);
+		add("East",scrlSintactico);	
 	}
 	
 	public void imprimirDatosLexicos(String s){
-		informadorLexico.append(s);
-	}	
-	
+		infoLexico.append(s);
+	}		
 	public void imprimirDatosSintacticos(String s){
-		informadorSintactico.append(s);
-	}
-	
+		infoSintactico.append(s);
+	}	
 	public void limpiarDatos(){
-		informadorLexico.setText("");
-		informadorSintactico.setText("");
+		infoLexico.setText("");
+		infoSintactico.setText("");
 	}
 }
