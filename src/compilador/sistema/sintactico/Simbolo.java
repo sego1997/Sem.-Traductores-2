@@ -1,7 +1,7 @@
 package compilador.sistema.sintactico;
 
 public class Simbolo {
-    String dato;
+    private String dato;
     
     public Simbolo(String dato){
         this.dato = dato;
