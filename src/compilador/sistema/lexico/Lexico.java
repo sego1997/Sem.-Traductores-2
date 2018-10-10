@@ -40,7 +40,7 @@ public class Lexico extends Thread implements DatoSimbolo,TipoSimbolo{
         continuar = true;
         caracterActual = 0;
         tamaFlujoCaracteres = flujoCaracteres.length();       
-    	compilador.dameEscribano().imprimirDatosLexicos("     Datos lexicos \n");
+    	compilador.dameEscribano().imprimirDatosLexicos("     Datos lexicos");
         while(compilador.puedeContinuar() && continuar){            
         	char c = sigCaracter();
         	palabra += c;

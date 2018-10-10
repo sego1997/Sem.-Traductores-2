@@ -7,8 +7,7 @@ import compilador.sistema.sintactico.Sintactico;
 public class Compilador {   
     private boolean continuar;
     private ArrayList<String> simbolos;
-	private String flujoCaracteres;     
-    
+	private String flujoCaracteres;         
 	private Escribano escribano;
 	private Lexico lexico;
 	private Sintactico sintactico;
@@ -34,26 +33,25 @@ public class Compilador {
     		flujoCaracteres += fcs[i];
     	}
     }
-        
-    public void puedeContinuar(boolean continuar){
-		this.continuar = continuar;
-	}      
-    public boolean puedeContinuar(){
-		return continuar;
-	}
     
-    public Escribano dameEscribano(){
-    	return escribano;
-    }
-   
-    public Sintactico dameSintactico(){
-    	return sintactico;
-    }
-    public Lexico dameLexico(){
-    	return lexico;
+    public Escribano dameEscribano(){ 
+    	return escribano; 
+    }  
+    
+    public Lexico dameLexico(){ 
+    	return lexico; 
+    }  
+    public Sintactico dameSintactico(){ 
+    	return sintactico; 
+    }    
+    public ArrayList<String> dameSimbolos(){ 
+    	return simbolos; 
     }
     
-    public ArrayList<String> dameSimbolos(){
-        return simbolos;
-    }        
+    public void puedeContinuar(boolean continuar){ 
+    	this.continuar = continuar; 
+    }      
+    public boolean puedeContinuar(){ 
+    	return continuar; 
+    }   
 }

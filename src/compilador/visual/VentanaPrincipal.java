@@ -14,17 +14,19 @@ public class VentanaPrincipal extends JFrame implements Escribano,TipoSimbolo{
 	 private static final long serialVersionUID = 1L;
 	 
 	 private static final String TITULO = "Seminario de Traductores de Lenguaje 2 \"Compilador\"";
-	 private int ancho;
+	 public static int alto;
+	 public static int ancho;
 	 
 	 private JTextArea areaCompilacion;
 	 private PanelInformador panelInformador;
 	    
 	 public VentanaPrincipal(){
 	  	Dimension ventana = Toolkit.getDefaultToolkit().getScreenSize();
+	  	alto = (int)ventana.getHeight();
 	   	ancho = (int)ventana.getWidth();
 	    	
 	    setTitle(TITULO); 
-	    setSize(ancho,700);
+	    setSize(ancho,alto);
 	    setLayout(new BorderLayout());
 	    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	    
