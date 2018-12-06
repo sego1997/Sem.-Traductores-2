@@ -82,8 +82,6 @@ public class Lexico extends Thread implements DatoSimbolo,TipoSimbolo{
 						estado = 1;			
 					}else if(esLetra(c) || c==GUION_BAJO){
 						estado = 4;
-					}else {
-//						compilador.puedeContinuar(false);
 					}
 				break;
 					

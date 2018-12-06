@@ -5,9 +5,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Stack;
 import compilador.sistema.Compilador;
+import compilador.sistema.sintactico.visual.Arboles;
+import compilador.sistema.semantico.Semantico;
 import compilador.util.DatoSimbolo;
 import compilador.util.TipoSimbolo;
-import compilador.visual.VentanaArbol;
 
 public class Sintactico extends Thread implements TipoSimbolo,DatoSimbolo{	   
 	private static final int TIEMPO = 1000;
@@ -30,7 +31,8 @@ public class Sintactico extends Thread implements TipoSimbolo,DatoSimbolo{
     private int simboloActual;           
     private Stack<Simbolo> pilaSimbolos;    
     public String[] reglas;
-    public int[][] tablaLR;    
+    public int[][] tablaLR;   
+    int cuentaSimbolos;
         
     public Sintactico(Compilador compilador){
         this.compilador = compilador;        
@@ -41,7 +43,8 @@ public class Sintactico extends Thread implements TipoSimbolo,DatoSimbolo{
     	arbol = new Arbol();    	
     	String entrada;	
     	continuar = true;
-    	simboloActual = 0;
+    	simboloActual = 0; 
+    	cuentaSimbolos = 0;
         pilaSimbolos = new Stack<>();    	
     	pilaSimbolos.push(new Terminal(PESO+""));
     	pilaSimbolos.push(new Accion(ES_IDENTIFICADOR+""));
@@ -68,23 +71,26 @@ public class Sintactico extends Thread implements TipoSimbolo,DatoSimbolo{
 	        	reduccion(accion+2);	        	
 	        }else if(accion>0){	
 	        	simboloActual++;
-	        	pilaSimbolos.push(new Terminal(entrada));
+	        	cuentaSimbolos++;
+	        	pilaSimbolos.push(new Terminal("("+cuentaSimbolos+") "+entrada));
 	        	pilaSimbolos.push(new Accion(accion+""));
 	        }else if(accion==0){
 	        	compilador.puedeContinuar(false);
 	        }	        
         }
         compilador.dameEscribano().imprimirDatosSintacticos("\n\n     Finalizado ...");
-        new VentanaArbol(arbol);
-        arbol.mostrar();
+//        arbol.mostrar();
+        new Arboles(arbol);        
+        new Semantico(arbol);                         
     }       
    
     private void reduccion(int idRegla){
     	idRegla *= -1;
-    	String[] regla = reglas[idRegla].split(SEPARADOR);    	
+    	String[] regla = reglas[idRegla].split(SEPARADOR); 
+    	cuentaSimbolos++;
     	arbol.agregarNodos(regla,idRegla+1,Integer.valueOf(regla[POS_POPS_REGLA]));    	
     }
-    
+/*
     private String mostrarPila(){
     	String datosPila = "\n     ";
     	int tamaPila = pilaSimbolos.size();    	
@@ -93,13 +99,13 @@ public class Sintactico extends Thread implements TipoSimbolo,DatoSimbolo{
     	}
     	return datosPila;
     } 
-    
+*/    
     public class Arbol {
     	private Nodo raiz;	
     	private Stack<Nodo> nodos;
     	private Stack<Nodo> defReglas; 
     	private int numHijo;
-    	private boolean continuar;
+    	private volatile boolean continuar;
     	
     	public Arbol() {		
     		raiz = null;
@@ -107,112 +113,189 @@ public class Sintactico extends Thread implements TipoSimbolo,DatoSimbolo{
     		defReglas = new Stack<>();
     	}
     		
-    	public void agregarNodos(String[] regla, int idRegla, int numElmtsRegla) {    		
+    	public void agregarNodos(String[] regla, int idRegla, int numElmtsRegla) { 
     		for(int i=0; i<numElmtsRegla; i++){    			
         		pilaSimbolos.pop();
-        		nodos.push(new Nodo(pilaSimbolos.peek()));
+        		nodos.push(new Nodo(pilaSimbolos.peek().dameDato()));
         		pilaSimbolos.pop();
         	}    	
         	int fil = Integer.valueOf(pilaSimbolos.peek().dameDato());
         	int col = Integer.valueOf(regla[Sintactico.POS_ID_REGLA]);
-        	NoTerminal noTerminal = new NoTerminal(regla[Sintactico.POS_NOM_REGLA],idRegla,numElmtsRegla);
+        	NoTerminal noTerminal = new NoTerminal("("+cuentaSimbolos+") "+regla[Sintactico.POS_NOM_REGLA],idRegla,numElmtsRegla);
         	pilaSimbolos.push(noTerminal);    	
         	pilaSimbolos.push(new Accion(tablaLR[fil][col]+""));
-        	Nodo padre = new Nodo(noTerminal);
+        	Nodo padre = new Nodo(noTerminal.dameDato());
         	for(int nodoActual=0; nodoActual<numElmtsRegla; nodoActual++) {
         		Nodo n = nodos.peek();
         		switch(nodoActual) {
-        			case 0: padre.fijaPrimero(n); break;        			
-        			case 1: padre.fijaSegundo(n); break;
-        			case 2: padre.fijaTercero(n); break;
-            		case 3: padre.fijaCuarto(n); break;
-            		case 4: padre.fijaQuinto(n); break;
-            		case 5: padre.fijaSexto(n); break;            		
+        			case 0: padre.fijaPri(n); break;        			
+        			case 1: padre.fijaSeg(n); break;
+        			case 2: padre.fijaTer(n); break;
+            		case 3: padre.fijaCua(n); break;
+            		case 4: padre.fijaQui(n); break;
+            		case 5: padre.fijaSex(n); break;            		
         		}
         		padre.numHijos(1);
         		n.fijaPadre(padre);
         		nodos.pop();
         	}
-        	compilador.dameEscribano().imprimirDatosSintacticos("   Padre("+padre.dameSimbolo().dameDato()+") hijos"+hijos(padre)+"\n");
-        	if(defReglas.size()>0) {      		
-        		continuar = true;
-        		enlazarNodos(padre,defReglas.peek(),defReglas.peek().dameSimbolo().dameDato());
-        		if(!continuar) {        			
-        			defReglas.pop();
-        		}
+        	reglas();        
+        	compilador.dameEscribano().imprimirDatosSintacticos("   Padre >> "+padre.dameDato()+" hijos "+hijos(padre)+"\n");
+        	boolean esExpresion = false;
+        	boolean esSentenciaBloque = false;
+        	String datoNodoPadre = "";
+        	String datoNodoHijo = "";
+        	if(defReglas.size()>0) {          		
+        		String regHijo = defReglas.peek().dameDato();
+        		String regPadre = padre.dameDato();
+        		datoNodoPadre = regPadre;
+        		datoNodoHijo = regHijo;
+        		datoNodoHijo = datoNodoHijo.substring(datoNodoHijo.indexOf(')')+2,datoNodoHijo.length());
+        		datoNodoPadre = datoNodoPadre.substring(datoNodoPadre.indexOf(')')+2,datoNodoPadre.length());
+        		if(datoNodoHijo.equals("Expresion")) {
+    				esExpresion = true;
+    			}else if(datoNodoHijo.equals("SentenciaBloque")) {
+    				esSentenciaBloque = true;
+    			}        		
+    			if(esSentenciaBloque) {
+    				if(!datoNodoPadre.equals("Otro")) {
+    					continuar = true;       		
+    					enlazarNodos(padre,defReglas.peek(),defReglas.peek().dameDato(),1);
+    					if(!continuar) {        			
+    						defReglas.pop();
+    					}
+    				}
+    			}
+    			if(esExpresion) {
+    				if(!datoNodoPadre.equals("Sentencia") && defReglas.peek().numHijos()==1 ) {
+    					continuar = true;       		
+    					enlazarNodos(padre,defReglas.peek(),defReglas.peek().dameDato(),1);
+    					if(!continuar) {        			
+    						defReglas.pop();
+    					}
+    				}else {  
+    					if(padre.numHijos()==3 || padre.numHijos()==2) {
+    						continuar = true;       		
+        					enlazarNodos(padre,defReglas.peek(),defReglas.peek().dameDato(),1);
+        					if(!continuar) {        			
+        						defReglas.pop();
+        					}
+    					}else {
+    						if(padre.damePri()!=null){
+    							String datoNodoHijoPri = padre.damePri().dameDato();
+    							datoNodoHijoPri = datoNodoHijoPri.substring(datoNodoHijoPri.indexOf(')')+2,datoNodoHijoPri.length());
+    							if(datoNodoHijoPri.equals("while")) {
+    								continuar = true;
+    								enlazarNodos(padre,defReglas.peek(),defReglas.peek().dameDato(),1);
+    								if(!continuar) {        			
+    	        						defReglas.pop();
+    	        					}
+    							}
+    						}
+    					}
+    				}
+    			}
+    			
+    			if(datoNodoPadre.equals("Sentencia") && padre.numHijos()==6) {
+					continuar = true;       		
+					enlazarNodos(padre,defReglas.peek(),defReglas.peek().dameDato(),1);
+					if(!continuar) {        			
+						defReglas.pop();
+					}
+				}
+    			if(!esExpresion && !esSentenciaBloque) { 
+    				for(int i=defReglas.size(); i>0; i--) {
+    					continuar = true;       		
+    					enlazarNodos(padre,defReglas.get(i-1),defReglas.get(i-1).dameDato(),2);
+    					if(!continuar) {
+    						defReglas.remove(i-1);
+    					}
+    				}										
+    			}
+    			
         	}          	
-        	if(raiz!=null) {        		
-        		continuar = true;
-        		enlazarNodos(padre,raiz,raiz.dameSimbolo().dameDato());
-        		if(continuar) defReglas.push(raiz);
-        	}
-/*        	
-        	if(continuar) {
-        		if(defReglas.size()>1) {
+        	if(raiz!=null) {     
+        		if(raiz.dameDato().equals("Expresion") && esExpresion) {
         			continuar = true;
-            		enlazarNodos(padre,defReglas.get(defReglas.size()-2),defReglas.get(defReglas.size()-2).dameSimbolo().dameDato());
-            		if(!continuar) {        			
-            			defReglas.remove(defReglas.size()-2);
-            		}
+        			enlazarNodos(padre,raiz,raiz.dameDato(),2);
+        			if(continuar) defReglas.push(raiz); 
+        		}else {
+        			continuar = true;
+        			enlazarNodos(padre,raiz,raiz.dameDato(),1);
+        			if(continuar) defReglas.push(raiz);        			
         		}
-        	}
-*/        	
+        	}   	
         	raiz = padre;       
     	}
     	
     	private String hijos(Nodo padre) {
     		String h="";
-    		if(padre.damePrimero()!=null) h += " (1)>>" +padre.damePrimero().dameSimbolo().dameDato(); 					    			
-    		if(padre.dameSegundo()!=null) h += " (2)>>" +padre.dameSegundo().dameSimbolo().dameDato(); 		
-    		if(padre.dameTercero()!=null) h += " (3)>>" +padre.dameTercero().dameSimbolo().dameDato(); 		
-    		if(padre.dameCuarto()!=null) h += " (4)>>" +padre.dameCuarto().dameSimbolo().dameDato(); 		
-    		if(padre.dameQuinto()!=null) h += " (5)>>" +padre.dameQuinto().dameSimbolo().dameDato(); 		
-    		if(padre.dameSexto()!=null) h += " (6)>>" +padre.dameSexto().dameSimbolo().dameDato(); 		
+    		if(padre.damePri()!=null) h += " >>" +padre.damePri().dameDato(); 					    			
+    		if(padre.dameSeg()!=null) h += " >>" +padre.dameSeg().dameDato(); 		
+    		if(padre.dameTer()!=null) h += " >>" +padre.dameTer().dameDato(); 		
+    		if(padre.dameCua()!=null) h += " >>" +padre.dameCua().dameDato(); 		
+    		if(padre.dameQui()!=null) h += " >>" +padre.dameQui().dameDato(); 		
+    		if(padre.dameSex()!=null) h += " >>" +padre.dameSex().dameDato(); 		
     		return h;
     	}
     	
-    	private void enlazarNodos(Nodo padre, Nodo hijo, String reg) {    		
-    		if(continuar) buscarReglaEnNodo(padre.damePrimero(),reg,0);    					    			
-    		if(continuar) buscarReglaEnNodo(padre.dameSegundo(),reg,1);
-    		if(continuar) buscarReglaEnNodo(padre.dameTercero(),reg,2);
-    		if(continuar) buscarReglaEnNodo(padre.dameCuarto(),reg,3);
-    		if(continuar) buscarReglaEnNodo(padre.dameQuinto(),reg,4);
-    		if(continuar) buscarReglaEnNodo(padre.dameSexto(),reg,5);
+    	private void enlazarNodos(Nodo padre, Nodo hijo, String reg, int tipo) {    		
+    		if(continuar) buscarReglaEnNodo(padre.damePri(),reg,0,tipo);    					    			
+    		if(continuar) buscarReglaEnNodo(padre.dameSeg(),reg,1,tipo);
+    		if(continuar) buscarReglaEnNodo(padre.dameTer(),reg,2,tipo);
+    		if(continuar) buscarReglaEnNodo(padre.dameCua(),reg,3,tipo);
+    		if(continuar) buscarReglaEnNodo(padre.dameQui(),reg,4,tipo);
+    		if(continuar) buscarReglaEnNodo(padre.dameSex(),reg,5,tipo);
     		if(!continuar){
     			switch(numHijo) {    			
-    				case 0: padre.fijaPrimero(hijo); break;
-    				case 1: padre.fijaSegundo(hijo); break;
-    				case 2: padre.fijaTercero(hijo); break;
-    				case 3: padre.fijaCuarto(hijo); break;
-    				case 4: padre.fijaQuinto(hijo); break;
-    				case 5: padre.fijaSexto(hijo); break;
+    				case 0: padre.fijaPri(hijo); break;
+    				case 1: padre.fijaSeg(hijo); break;
+    				case 2: padre.fijaTer(hijo); break;
+    				case 3: padre.fijaCua(hijo); break;
+    				case 4: padre.fijaQui(hijo); break;
+    				case 5: padre.fijaSex(hijo); break;
     			}
     			hijo.fijaPadre(padre);					
     		}
     	}
     	
-    	private void buscarReglaEnNodo(Nodo hijo, String nomRegla, int numH) {
+    	private void buscarReglaEnNodo(Nodo hijo, String nomRegla, int numH, int tipo) {
     		if(hijo!=null) {
-    			if(hijo.dameSimbolo().dameDato().equals(nomRegla) && hijo.damePrimero()==null) {    				
-    				continuar = false;
-    				numHijo = numH;
+    			if(tipo==1) {
+    				if(hijo.dameDato().equals(nomRegla)) { 
+    					continuar = false;
+    					numHijo = numH;
+    				}
+    			}else {
+    				if(hijo.dameDato().equals(nomRegla) && hijo.damePri()==null) { 
+        				continuar = false;
+        				numHijo = numH;
+        			}
     			}
     		}
     	}
-    	
+///*    	
+    	public void reglas() {    		
+    		for(int i=0; i<defReglas.size(); i++) {   		
+    			compilador.dameEscribano().imprimirDatosSintacticos("   "+defReglas.get(i).dameDato()+" hijos >> "+defReglas.get(i).numHijos()+" >> "+hijos(defReglas.get(i))+"\n");
+    		}
+    		if(defReglas.size()!=0) {
+    			compilador.dameEscribano().imprimirDatosSintacticos("\n");
+    		}
+    	}
+//*/    	
     	public void mostrar() {
     		mostrar(raiz);
     	}
     	
-    	private void mostrar(Nodo actual) {    		
-    		if(actual.damePrimero()!=null) mostrar(actual.damePrimero());
-    		if(actual.dameSegundo()!=null) mostrar(actual.dameSegundo());
-    		if(actual.dameTercero()!=null) mostrar(actual.dameTercero());
-    		if(actual.dameCuarto()!=null) mostrar(actual.dameCuarto());
-    		if(actual.dameQuinto()!=null) mostrar(actual.dameQuinto());
-    		if(actual.dameSexto()!=null) mostrar(actual.dameSexto());
-//    		compilador.dameEscribano().imprimirDatosSintacticos("\n     "+actual.dameSimbolo().dameDato());
-//    		compilador.dameEscribano().imprimirDatosSintacticos(" >> "+actual.numHijos()+" hijos ");    		
+    	private void mostrar(Nodo actual) { 
+    		System.out.println("("+actual.dameDato()+")");
+    		if(actual.damePri()!=null) mostrar(actual.damePri());
+    		if(actual.dameSeg()!=null) mostrar(actual.dameSeg());
+    		if(actual.dameTer()!=null) mostrar(actual.dameTer());
+    		if(actual.dameCua()!=null) mostrar(actual.dameCua());
+    		if(actual.dameQui()!=null) mostrar(actual.dameQui());
+    		if(actual.dameSex()!=null) mostrar(actual.dameSex()); 		
     	}
     	
     	public Nodo dameRaiz() {

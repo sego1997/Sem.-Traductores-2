@@ -7,69 +7,69 @@ public class Nodo {
 	int ancho;
 	int idRegla;
 	private Nodo padre;
-	private Nodo primero;
-	private Nodo segundo;
-	private Nodo tercero;
-	private Nodo cuarto;
-	private Nodo quinto;
-	private Nodo sexto;		
+	private Nodo pri;
+	private Nodo seg;
+	private Nodo ter;
+	private Nodo cua;
+	private Nodo qui;
+	private Nodo sex;		
 	private String tipo;
-	private int numHijos;	
-	private Simbolo simbolo;	
+	private int numHijos;
+	private String dato;
 	
-	public Nodo(Simbolo simbolo) {
-		this.simbolo = simbolo;
-		primero = null;
-		segundo = null;
-		tercero = null;
-		cuarto = null;
-		quinto = null;
-		sexto = null;
+	public Nodo(String dato) {
+		this.dato = dato;
+		pri = null;
+		seg = null;
+		ter = null;
+		cua = null;
+		qui = null;
+		sex = null;
 		padre = null;
 		numHijos = 0;
 		cor = 0;
 	}
 	
-	public void fijaPrimero(Nodo primero) { 
-		this.primero = primero; 
+	public void fijaPri(Nodo primero) { 
+		this.pri = primero; 
 	}
-	public Nodo damePrimero() { 
-		return primero; 
-	}
-	
-	public void fijaSegundo(Nodo segundo) { 
-		this.segundo = segundo; 
-	}
-	public Nodo dameSegundo() { 
-		return segundo; 
+	public Nodo damePri() { 
+		return pri; 
 	}
 	
-	public void fijaTercero(Nodo tercero) { 
-		this.tercero = tercero; 
+	public void fijaSeg(Nodo segundo) { 
+		this.seg = segundo; 
 	}
-	public Nodo dameTercero() { 
-		return tercero; 
-	}
-	
-	public void fijaCuarto(Nodo cuarto) { 
-		this.cuarto = cuarto; 
-	}
-	public Nodo dameCuarto() { 
-		return cuarto; 
+	public Nodo dameSeg() { 
+		return seg; 
 	}
 	
-	public void fijaQuinto(Nodo quinto) { 
-		this.quinto = quinto; 
+	public void fijaTer(Nodo tercero) { 
+		this.ter = tercero; 
 	}
-	public Nodo dameQuinto() { 
-		return quinto; 
+	public Nodo dameTer() { 
+		return ter; 
 	}
 	
-	public void fijaSexto(Nodo sexto) { 
-		this.sexto = sexto; 
+	public void fijaCua(Nodo cuarto) { 
+		this.cua = cuarto; 
 	}
-	public Nodo dameSexto() { 
-		return sexto; 
+	public Nodo dameCua() { 
+		return cua; 
+	}
+	
+	public void fijaQui(Nodo quinto) { 
+		this.qui = quinto; 
+	}
+	public Nodo dameQui() { 
+		return qui; 
+	}
+	
+	public void fijaSex(Nodo sexto) { 
+		this.sex = sexto; 
+	}
+	public Nodo dameSex() { 
+		return sex; 
 	}
 	
 	public void fijaPadre(Nodo padre) { 
@@ -84,13 +84,6 @@ public class Nodo {
 	}
 	public String dameTipo() {
 		return tipo;
-	}
-	
-	public void fijaSimbolo(Simbolo simbolo) {
-		this.simbolo = simbolo;
-	}
-	public Simbolo dameSimbolo() {
-		return simbolo;
 	}
 	
 	public void numHijos(int nh) {
@@ -118,5 +111,8 @@ public class Nodo {
 	}
 	public int cor() {
 		return cor;
+	}
+	public String dameDato() {
+		return dato;
 	}
 }
